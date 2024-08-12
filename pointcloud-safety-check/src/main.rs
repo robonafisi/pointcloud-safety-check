@@ -7,7 +7,7 @@ use ndarray::{Array, Array3};
 use ndarray_rand::RandomExt;
 use ndarray_rand::rand_distr::Uniform;
 
-// Error handling function for mismatched dimensions
+// Error Handling
 fn assert_same_shape(t1: &Tensor, t2: &Tensor, name1: &str, name2: &str) {
     if t1.shape() != t2.shape() {
         panic!(
@@ -96,6 +96,8 @@ impl Module for CombinedModel {
     }
 }
 
+
+// The sample data to run the program
 fn generate_data(num_samples: usize, img_size: (usize, usize), pc_size: usize) -> (Tensor, Tensor, Tensor) {
     let mut rng = thread_rng();
 
@@ -136,6 +138,8 @@ fn split_data(inputs: &Tensor, labels: &Tensor, split_ratio: f64) -> ((Tensor, T
     ((train_inputs, train_labels), (val_inputs, val_labels))
 }
 
+
+// Parameters for the Model
 fn train_model(
     model: &mut CombinedModel,
     train_imgs: &Tensor,
@@ -175,6 +179,7 @@ fn train_model(
         println!("Epoch {}: Validation Loss = {:?}, Accuracy = {:.2}%", epoch, val_loss, accuracy * 100.0);
     }
 }
+
 
 fn main() {
     let img_size = (28, 28);
