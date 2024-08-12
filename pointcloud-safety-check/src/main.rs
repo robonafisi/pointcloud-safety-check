@@ -1,9 +1,9 @@
 [dependencies]
-burn = "0.1"  # Update to the latest version if needed
-burn-tensor = "0.1"  # Update to the latest version if needed
-rand = "0.8"  # For random number generation
-ndarray = "0.15"  # For handling multi-dimensional arrays (point cloud data)
-ndarray-rand = "0.14"  # For generating random ndarrays
+burn = "0.1"  
+burn-tensor = "0.1"
+rand = "0.8"  
+ndarray = "0.15"  
+ndarray-rand = "0.14"  
 
 use burn::tensor::Tensor;
 use burn::nn::{Conv2d, Linear, ReLU, Sequential, Module, CrossEntropyLoss, Flatten};
@@ -14,7 +14,7 @@ use ndarray::{Array, Array3};
 use ndarray_rand::RandomExt;
 use ndarray_rand::rand_distr::Uniform;
 
-// Define a CNN for image data
+
 struct CNN {
     layers: Sequential,
 }
@@ -40,7 +40,7 @@ impl Module for CNN {
     }
 }
 
-// Define a simple MLP for point cloud data
+
 struct PointCloudMLP {
     layers: Sequential,
 }
@@ -63,7 +63,7 @@ impl Module for PointCloudMLP {
     }
 }
 
-// Define a combined model
+
 struct CombinedModel {
     cnn: CNN,
     mlp: PointCloudMLP,
@@ -74,7 +74,7 @@ impl CombinedModel {
     fn new(input_dim: usize) -> Self {
         let cnn = CNN::new();
         let mlp = PointCloudMLP::new(input_dim);
-        let final_layer = Linear::new(128 + 64, 2); // Combining CNN and MLP outputs
+        let final_layer = Linear::new(128 + 64, 2); 
 
         Self {
             cnn,
@@ -93,23 +93,23 @@ impl Module for CombinedModel {
     }
 }
 
-// Generate synthetic image and point cloud data
+
 fn generate_data(num_samples: usize, img_size: (usize, usize), pc_size: usize) -> (Tensor, Tensor, Tensor) {
     let mut rng = thread_rng();
 
-    // Generate random images
+
     let images: Vec<Vec<f64>> = (0..num_samples)
         .map(|_| (0..(img_size.0 * img_size.1)).map(|_| rng.gen_range(0.0..1.0)).collect())
         .collect();
     let images_tensor = Tensor::from(images).reshape(&[num_samples, 1, img_size.0, img_size.1]);
 
-    // Generate random point clouds
+
     let point_clouds: Vec<Vec<f64>> = (0..num_samples)
         .map(|_| (0..pc_size).map(|_| rng.gen_range(-1.0..1.0)).collect())
         .collect();
     let point_clouds_tensor = Tensor::from(point_clouds);
 
-    // Generate labels (0 for no stop, 1 for stop)
+
     let labels: Vec<u64> = (0..num_samples)
         .map(|i| if images[i][0] + point_clouds[i][0] > 1.0 { 1 } else { 0 })
         .collect();
@@ -118,7 +118,7 @@ fn generate_data(num_samples: usize, img_size: (usize, usize), pc_size: usize) -
     (images_tensor, point_clouds_tensor, labels_tensor)
 }
 
-// Split data into training and validation sets
+
 fn split_data(inputs: &Tensor, labels: &Tensor, split_ratio: f64) -> ((Tensor, Tensor), (Tensor, Tensor)) {
     let num_samples = inputs.shape()[0];
     let mut indices: Vec<usize> = (0..num_samples).collect();
@@ -136,7 +136,7 @@ fn split_data(inputs: &Tensor, labels: &Tensor, split_ratio: f64) -> ((Tensor, T
     ((train_inputs, train_labels), (val_inputs, val_labels))
 }
 
-// Train the model
+
 fn train_model(
     model: &mut CombinedModel,
     train_imgs: &Tensor,
@@ -151,21 +151,21 @@ fn train_model(
     let mut optimizer = SGD::new(learning_rate);
 
     for epoch in 0..epochs {
-        // Forward pass: Compute predicted y by passing x to the model
+        
         let predictions = model.forward(train_imgs, train_pcs);
 
-        // Compute and print loss
+
         let loss = CrossEntropyLoss::forward(&predictions, train_labels);
         println!("Epoch {}: Training Loss = {:?}", epoch, loss);
 
-        // Backward pass: Compute gradients
+   
         model.zero_grad();
         loss.backward();
 
-        // Update weights
+   
         optimizer.step(model);
 
-        // Validation
+     
         let val_predictions = model.forward(val_imgs, val_pcs);
         let val_loss = CrossEntropyLoss::forward(&val_predictions, val_labels);
         let correct_predictions = val_predictions
@@ -180,20 +180,19 @@ fn train_model(
 }
 
 fn main() {
-    // Parameters
-    let img_size = (28, 28);  // Example image size (28x28)
-    let pc_size = 100;  // Example point cloud size
+
+    let img_size = (28, 28); 
+    let pc_size = 100;  
     let num_samples = 1000;
     let split_ratio = 0.8;
     let epochs = 50;
     let learning_rate = 0.01;
 
-    // Generate and split data
     let (images, point_clouds, labels) = generate_data(num_samples, img_size, pc_size);
     let ((train_imgs, train_labels), (val_imgs, val_labels)) = split_data(&images, &labels, split_ratio);
     let ((train_pcs, _), (val_pcs, _)) = split_data(&point_clouds, &labels, split_ratio);
 
-    // Initialize and train the model
+
     let mut model = CombinedModel::new(pc_size);
     train_model(&mut model, &train_imgs, &train_pcs, &train_labels, &val_imgs, &val_pcs, &val_labels, epochs, learning_rate);
 }
